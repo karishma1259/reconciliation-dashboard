@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import FilterBar from "./components/FilterBar.jsx";
 import DiscrepancyTable from "./components/DiscrepancyTable.jsx";
 
-const API_BASE = "http://localhost:8000/api";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000/api";
 
 export default function App() {
   const [orgs, setOrgs] = useState([]);
