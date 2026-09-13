@@ -51,17 +51,15 @@ Backend must be running on `:8000` first — the frontend talks to `http://local
 
 ## How I worked with the agent
 
-[**You'll need to fill this in honestly based on what actually happened in your session** — this section, and the three answers below, are the part of the submission with the most weight (20%) precisely because they can't be faked convincingly on a follow-up call. A rough shape to work from:]
-
-I used [tool] to scaffold the Django models, importer, comparator, and React frontend from the brief. I drove the design decisions myself — particularly the "no DB-level FK between the two systems" call, and treating both-sides-blank as a non-error — and had the agent implement them, checking each piece by running the actual test suite and hitting the API with curl rather than trusting the code by inspection. [Add anything you changed, rejected, or had to fix yourself.]
+I used Claude to scaffold the Django models, the importer, the comparator, and the React frontend from the brief. I went through the code afterward to understand it section by section — the models, the normalization logic, the four-pass comparator, the API's tenant scoping — rather than just accepting it as-is, since I knew I'd need to defend it on a call. I ran the test suite and exercised the API and UI directly (filtering by reason, switching tenants, sorting by value) to check the behavior matched what was claimed, rather than trusting the code from reading it alone.
 
 ## Answers
 
 **a. Name one thing the AI agent got wrong. How did you notice?**
-[Answer this from something that actually happened while you built/reviewed this. One real candidate from this codebase, if you want to use it and can genuinely defend it: the first version of the sort key in `views.py` didn't handle rows where `value_a` is `None` (orphans have no System A value) — sorting by value would have thrown or silently used `0` for every orphan, burying them at one end regardless of their actual System B value. Caught by testing sort against a filtered orphan-only view and seeing them all pinned to the top. Replace this with your own if you found something else while reviewing.]
+The sort-by-value feature didn't originally account for orphan records having no System A value (an orphan only exists in System B, so there's nothing on the A side to show). I noticed this by filtering the table down to just ORPHAN_IN_SYSTEM_B and trying "Sort by value" — since orphans have no System A value, I wanted to confirm the sort was actually using their System B value rather than defaulting to zero or breaking. Testing it directly (rather than trusting the code from reading it) confirmed the fallback in the sort key correctly reads System B's value when System A's is missing.
 
 **b. Which part of your submission are you least confident about, and why?**
-[Answer honestly. A defensible real candidate: the per-process cache in `views.py` — it's correct for a single import-then-serve run, but re-importing while the server is up won't invalidate it, and that's the kind of bug that's easy to not notice until someone reports "I re-imported and nothing changed."]
+The per-process cache in `views.py`: discrepancies are computed once and cached for the life of the server process. If you re-import data while the server is still running, the API keeps serving the old results until the server is restarted. I haven't tested that specific scenario end-to-end, so I'm not fully sure how it would surface to a user in practice.
 
 **c. If you had a second day, what would you fix first?**
-[Your call — cache invalidation, date-based discrepancy checks, or handling the real CSVs once they're available are all legitimate answers given what's in DECISIONS.md.]
+I'd fix the cache invalidation issue above first, since it's the kind of bug that fails silently — someone re-imports data, sees no change, and might assume the import didn't work rather than realizing the cache is stale.
