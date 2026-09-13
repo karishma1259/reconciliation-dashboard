@@ -2,6 +2,13 @@
 
 Finds where System A and System B disagree about the same events, scoped per tenant.
 
+## Live demo
+
+- **Frontend:** https://reconciliation-frontend-mcg2.onrender.com
+- **Backend API:** https://reconciliation-dashboard-u8pd.onrender.com/api
+
+Note: both are on Render's free tier, so the backend may take 30-60 seconds to wake up on the first request after a period of inactivity.
+
 ## How to run
 
 ### Backend
